@@ -1,0 +1,15 @@
+# IMPORTANT: Never commit your real credentials to a public repo!
+# After customizing SKILL.md with your real server details,
+# add it to .gitignore or keep your fork private.
+
+# Uncomment the lines below to protect your credentials:
+# skills/server-control/SKILL.md
+# .mcp.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc

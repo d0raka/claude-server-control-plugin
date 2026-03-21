@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "my-server": {
+      "type": "sse",
+      "url": "http://YOUR_TAILSCALE_IP:YOUR_MCP_PORT/sse"
+    }
+  }
+}
