@@ -1,11 +1,11 @@
 #!/bin/bash
-# Claude Server Control Plugin — Linux Setup
+# Claude Server Control Plugin - Linux Setup
 # Run this on your LINUX SERVER (not your computer)
 
 set -e
 
 echo "╔══════════════════════════════════════════╗"
-echo "║  Claude Server Control — Linux Setup     ║"
+echo "║  Claude Server Control - Linux Setup     ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
@@ -31,7 +31,7 @@ if ! command -v tailscale &> /dev/null; then
     echo "  ✓ Tailscale installed. Connect it with:"
     echo "    sudo tailscale up"
 else
-    TAILSCALE_IP=$(tailscale ip -4 2>/dev/null || echo "not connected — run: sudo tailscale up")
+    TAILSCALE_IP=$(tailscale ip -4 2>/dev/null || echo "not connected - run: sudo tailscale up")
     echo "  ✓ Tailscale IP: $TAILSCALE_IP"
 fi
 

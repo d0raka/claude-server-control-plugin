@@ -1,36 +1,63 @@
-# 🖥️ Claude Server Control Plugin
+# Claude Server Control Plugin
 
-Control any computer remotely from Claude — **Linux, macOS, or Windows** — using natural conversation.
+Control any computer remotely from Claude - **Linux, macOS, or Windows** - using natural conversation.
 
-Run commands, manage services, deploy code, monitor health, edit files — all through Claude, without touching a terminal yourself.
+Run commands, manage services, deploy code, monitor health, edit files - all through Claude, without touching a terminal yourself.
 
 Built with SSH via `paramiko`.
 
 ---
 
-## Supported Platforms
+## Install in 2 steps
 
-| Platform | SKILL file | Setup script |
-|----------|-----------|--------------|
-| 🐧 Linux (Ubuntu, Debian, Arch…) | `SKILL.md` | `setup/setup-linux.sh` |
-| 🍎 macOS | `SKILL-mac.md` | `setup/setup-mac.sh` |
-| 🪟 Windows 10/11 / Server | `SKILL-windows.md` | `setup/setup-windows.ps1` |
+### Step 1 - Run the installer on your computer (where Claude is)
+
+**Linux or macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/d0raka/claude-server-control-plugin/main/install.sh | bash
+```
+
+**Windows** (PowerShell):
+```powershell
+irm https://raw.githubusercontent.com/d0raka/claude-server-control-plugin/main/install.ps1 | iex
+```
+
+The installer asks which platform you want to control (Linux / Mac / Windows), then asks for the IP, username, and password. It fills everything in automatically.
+
+### Step 2 - Load the plugin in Claude Cowork
+
+1. Open Claude Cowork
+2. Go to **Settings -> Plugins -> Load local plugin**
+3. Select the `claude-server-control-plugin` folder (saved to your home directory)
+4. Start a new chat - Claude connects to your machine automatically
+
+That's it.
+
+---
+
+## Supported platforms
+
+| Platform | SKILL file |
+|----------|-----------|
+| Linux (Ubuntu, Debian, Arch...) | `SKILL.md` |
+| macOS | `SKILL-mac.md` |
+| Windows 10/11 / Server | `SKILL-windows.md` |
 
 ---
 
 ## How it works
 
-Claude connects to your machine via **SSH** using Python's `paramiko` library, which runs inside Claude's secure sandbox. No agents running in the background — Claude SSHes in and runs commands only when you ask.
+Claude connects to your machine via **SSH** using Python's `paramiko` library, which runs inside Claude's secure sandbox. No agents running in the background - Claude SSHes in and runs commands only when you ask.
 
 ```
 Your Computer (Claude Cowork)
-        │
-        │  SSH over Tailscale VPN
-        ▼
+        |
+        |  SSH over Tailscale VPN
+        v
 Your Remote Machine (Linux / Mac / Windows)
 ```
 
-**Tailscale** is used for networking — it gives your machine a stable private IP that works from anywhere, without exposing ports to the internet.
+**Tailscale** is used for networking - it gives your machine a stable private IP that works from anywhere, without exposing ports to the internet.
 
 ---
 
@@ -43,9 +70,9 @@ Your Remote Machine (Linux / Mac / Windows)
 
 ---
 
-## Quick Start
+## Set up the remote machine
 
-### Step 1 — Run the setup script on your remote machine
+If SSH or Tailscale aren't set up yet on the machine you want to control, run the matching script on that machine:
 
 **Linux:**
 ```bash
@@ -62,61 +89,32 @@ bash setup/setup-mac.sh
 .\setup\setup-windows.ps1
 ```
 
-The script will install SSH, set up Tailscale, and print your connection details.
+Each script installs SSH, sets up Tailscale, and prints the exact IP and username you need for the installer.
 
 ---
 
-### Step 2 — Activate the right SKILL file
+## Tailscale setup
 
-Only one `SKILL.md` can be active at a time. Rename the file for your platform:
+Tailscale creates a private VPN between your devices - no port forwarding, no exposed IPs.
 
-**Linux** — already active by default (`SKILL.md`)
-
-**macOS:**
+On your remote machine (Linux):
 ```bash
-mv skills/server-control/SKILL.md skills/server-control/SKILL-linux.md
-mv skills/server-control/SKILL-mac.md skills/server-control/SKILL.md
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+tailscale ip -4   # use this IP in the installer
 ```
 
-**Windows:**
-```bash
-mv skills/server-control/SKILL.md skills/server-control/SKILL-linux.md
-mv skills/server-control/SKILL-windows.md skills/server-control/SKILL.md
-```
+macOS / Windows: Download from [tailscale.com/download](https://tailscale.com/download)
+
+On your own computer: same - install Tailscale and sign in with the same account.
 
 ---
 
-### Step 3 — Edit SKILL.md with your details
-
-Open `skills/server-control/SKILL.md` and fill in:
-
-| Placeholder | Replace with |
-|------------|--------------|
-| `YOUR_SERVER_IP` / `YOUR_MAC_IP` / `YOUR_WINDOWS_IP` | Your Tailscale IP (e.g. `100.64.0.5`) |
-| `YOUR_USERNAME` | SSH username |
-| `YOUR_PASSWORD` | SSH password |
-
-Also customize:
-- **My Services** table → list your running services
-- **Key Paths** → where your projects live
-- **tmux Sessions** (Linux/Mac) → your background sessions
-
----
-
-### Step 4 — Load the plugin in Claude Cowork
-
-1. Open Claude Cowork
-2. Go to **Settings → Plugins → Load local plugin**
-3. Select the `claude-server-control-plugin` folder
-4. Start a new chat — Claude connects automatically
-
----
-
-## Example Conversations
+## Example conversations
 
 > "What's the CPU and memory usage?"
 
-> "Restart the nginx service"
+> "Restart nginx"
 
 > "Show me the last 50 lines of the app log"
 
@@ -126,89 +124,48 @@ Also customize:
 
 > "What docker containers are running?"
 
-> "Find all files larger than 1GB on the disk"
+> "Find all files larger than 1GB"
 
-> "What's in the Windows Event Log — any errors in the last hour?"
-
----
-
-## Tailscale Setup (recommended)
-
-Tailscale creates a private VPN between your devices — no port forwarding, no exposed IPs.
-
-**On your remote machine:**
-
-Linux:
-```bash
-curl -fsSL https://tailscale.com/install.sh | sh
-sudo tailscale up
-tailscale ip -4   # ← use this as YOUR_SERVER_IP
-```
-
-macOS / Windows: Download from [tailscale.com/download](https://tailscale.com/download)
-
-**On your computer (where Claude runs):** Same — install Tailscale and sign in with the same account.
+> "What's in the Windows Event Log - any errors in the last hour?"
 
 ---
 
 ## Security
 
-⚠️ This plugin gives Claude full SSH access to your machine. Use it responsibly.
+This plugin gives Claude SSH access to your machine. A few things to keep in mind:
 
-**Best practices:**
-- Use Tailscale — don't expose port 22 to the internet
-- Use SSH key authentication instead of passwords:
+- **Use Tailscale** - don't expose port 22 to the public internet
+- **Use SSH key auth** instead of passwords for better security:
   ```bash
   ssh-keygen -t ed25519 -C "claude-plugin"
   ssh-copy-id user@YOUR_IP
   ```
-  Then in SKILL.md, replace the password parameter with `key_filename='/path/to/key'`
-- Create a dedicated user with limited permissions instead of using root/admin
-- **Never push a SKILL.md with real credentials to a public repo**
-
-**Add to .gitignore if you fork this:**
-```
-skills/server-control/SKILL.md
-.mcp.json
-```
+  Then edit `SKILL.md` and replace the password line with `key_filename='/path/to/key'`
+- **Keep the plugin folder private** - it contains your credentials after install
+- **Never push your filled-in SKILL.md** to a public repo
 
 ---
 
-## File Structure
+## File structure
 
 ```
 claude-server-control-plugin/
+├── install.sh                    # Linux/Mac one-liner installer
+├── install.ps1                   # Windows one-liner installer
 ├── .claude-plugin/
-│   └── plugin.json               # Plugin metadata
+│   └── plugin.json
 ├── skills/
 │   └── server-control/
-│       ├── SKILL.md              # ← ACTIVE skill (edit this)
+│       ├── SKILL.md              # Active skill (filled in by installer)
 │       ├── SKILL-mac.md          # macOS version
 │       └── SKILL-windows.md      # Windows version
 ├── setup/
-│   ├── setup-linux.sh            # Linux setup script
-│   ├── setup-mac.sh              # macOS setup script
-│   └── setup-windows.ps1         # Windows setup (run as Admin)
-├── .mcp.json                     # Optional: MCP server connection
+│   ├── setup-linux.sh            # Run on the remote Linux machine
+│   ├── setup-mac.sh              # Run on the remote Mac
+│   └── setup-windows.ps1         # Run on the remote Windows machine (as Admin)
+├── .mcp.json
 ├── .gitignore
 └── README.md
-```
-
----
-
-## Optional: MCP Server
-
-If you run an MCP-compatible server on your machine, you can also connect via `.mcp.json` for additional tool access. Edit the file with your IP and port:
-
-```json
-{
-  "mcpServers": {
-    "my-server": {
-      "type": "sse",
-      "url": "http://YOUR_IP:YOUR_MCP_PORT/sse"
-    }
-  }
-}
 ```
 
 ---
@@ -216,29 +173,19 @@ If you run an MCP-compatible server on your machine, you can also connect via `.
 ## Troubleshooting
 
 **Can't connect:**
-- Tailscale running on both machines? → `tailscale status`
-- SSH service running? → Linux: `systemctl status ssh` / Mac: check System Settings → Sharing / Windows: `Get-Service sshd`
-- Test manually: `ssh YOUR_USERNAME@YOUR_IP`
-- Wrong username? On Windows it's case-sensitive and must match exactly
+- Is Tailscale running on both machines? Run `tailscale status`
+- Is SSH running? Linux: `systemctl status ssh` / Mac: System Settings -> Sharing -> Remote Login / Windows: `Get-Service sshd`
+- Test manually from your terminal: `ssh YOUR_USERNAME@YOUR_IP`
 
-**paramiko install fails:**
-- The SKILL.md handles this automatically with `--break-system-packages`
+**Wrong credentials after install:**
+- Re-run the installer - it updates SKILL.md for you
+- Or edit `skills/server-control/SKILL.md` directly
 
-**Windows: shell is CMD instead of PowerShell:**
-- Re-run `setup-windows.ps1` as Administrator — it sets PowerShell as default
-
-**Permission denied:**
-- Double-check username and password in SKILL.md
-- On Linux/Mac, confirm the user has SSH access
-
----
-
-## Credits
-
-Originally built for a home Linux server + Claude Cowork setup. Open-sourced so anyone can connect Claude to their own machine.
+**Windows: Claude is using CMD instead of PowerShell:**
+- Re-run `setup/setup-windows.ps1` as Administrator
 
 ---
 
 ## License
 
-MIT — fork it, adapt it, make it yours.
+MIT - fork it, adapt it, make it yours.

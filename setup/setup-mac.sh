@@ -1,11 +1,11 @@
 #!/bin/bash
-# Claude Server Control Plugin — macOS Setup
+# Claude Server Control Plugin - macOS Setup
 # Run this on your MAC (the machine you want Claude to control)
 
 set -e
 
 echo "╔══════════════════════════════════════════╗"
-echo "║  Claude Server Control — macOS Setup     ║"
+echo "║  Claude Server Control - macOS Setup     ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
@@ -28,7 +28,7 @@ if ! command -v tailscale &> /dev/null; then
     echo "  Install it from: https://tailscale.com/download/mac"
     echo "  Or via Homebrew: brew install --cask tailscale"
 else
-    TAILSCALE_IP=$(tailscale ip -4 2>/dev/null || echo "not connected — open Tailscale app to connect")
+    TAILSCALE_IP=$(tailscale ip -4 2>/dev/null || echo "not connected - open Tailscale app to connect")
     echo "  ✓ Tailscale IP: $TAILSCALE_IP"
 fi
 

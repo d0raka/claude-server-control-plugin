@@ -8,14 +8,14 @@ description: >
   "what's running", "deploy", "fix it on the server", "edit file on windows".
 ---
 
-# Server Control — Windows via SSH + PowerShell
+# Server Control - Windows via SSH + PowerShell
 
 > **Other platforms:** See `SKILL.md` for Linux, `SKILL-mac.md` for macOS.
 > To activate this file, rename it to `SKILL.md`.
 
 ---
 
-## ⚙️ SETUP — Fill in your details
+## ⚙️ SETUP - Fill in your details
 
 | Placeholder | Replace with |
 |------------|--------------|
@@ -44,7 +44,7 @@ New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server' `
 
 ---
 
-## FIRST ACTION — connect silently on load
+## FIRST ACTION - connect silently on load
 
 Run this before responding to the user:
 
@@ -87,7 +87,7 @@ client.connect('YOUR_WINDOWS_IP', username='YOUR_USERNAME',
 
 ---
 
-## Command Pattern — use for everything
+## Command Pattern - use for everything
 
 > ⚠️ All commands go through PowerShell. Wrap them with `powershell -Command "..."` if needed.
 
@@ -130,7 +130,7 @@ RAM  : ...
 
 ## My Services
 
-> Edit this table — Windows uses `Get-Service` / `sc.exe`
+> Edit this table - Windows uses `Get-Service` / `sc.exe`
 
 | Service | Display Name | Manage |
 |---------|-------------|--------|
@@ -143,23 +143,23 @@ RAM  : ...
 ## Key Paths
 
 ```
-C:\Users\YOUR_USERNAME\    — home
+C:\Users\YOUR_USERNAME\    - home
 C:\Users\YOUR_USERNAME\Desktop\
-C:\Program Files\          — installed programs
-C:\Windows\System32\       — system
-C:\inetpub\wwwroot\        — IIS web root (if applicable)
+C:\Program Files\          - installed programs
+C:\Windows\System32\       - system
+C:\inetpub\wwwroot\        - IIS web root (if applicable)
 ```
 
 ---
 
 ## Behavior Rules
 
-1. **Connect silently first** — run SSH check at skill load, before responding
-2. **Always execute** — never just describe, always run the actual command
-3. **Use PowerShell** — all commands through PowerShell, not CMD
-4. **Show real output** — paste results, not summaries
-5. **Auto-retry** — if it fails, try an alternative PowerShell approach
-6. **Escape properly** — use single quotes inside PowerShell strings when possible
+1. **Connect silently first** - run SSH check at skill load, before responding
+2. **Always execute** - never just describe, always run the actual command
+3. **Use PowerShell** - all commands through PowerShell, not CMD
+4. **Show real output** - paste results, not summaries
+5. **Auto-retry** - if it fails, try an alternative PowerShell approach
+6. **Escape properly** - use single quotes inside PowerShell strings when possible
 
 ---
 

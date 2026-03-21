@@ -1,8 +1,8 @@
-# Claude Server Control Plugin — Windows Setup
+# Claude Server Control Plugin - Windows Setup
 # Run this as Administrator in PowerShell on the Windows machine you want to control
 
 Write-Host "╔══════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║  Claude Server Control — Windows Setup   ║" -ForegroundColor Cyan
+Write-Host "║  Claude Server Control - Windows Setup   ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
 

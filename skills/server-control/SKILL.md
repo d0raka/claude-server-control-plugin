@@ -8,24 +8,24 @@ description: >
   "server status", "what's running", "fix it", "edit file on server".
 ---
 
-# Server Control — Linux via SSH
+# Server Control - Linux via SSH
 
 > **Other platforms:** See `SKILL-mac.md` for macOS, `SKILL-windows.md` for Windows.
 > To activate a different platform, rename its file to `SKILL.md`.
 
 ---
 
-## ⚙️ SETUP — Fill in your details
+## ⚙️ SETUP - Fill in your details
 
 | Placeholder | Replace with |
 |------------|--------------|
 | `YOUR_SERVER_IP` | Tailscale IP recommended (e.g. `100.64.0.5`) |
 | `YOUR_USERNAME` | SSH user (e.g. `ubuntu`, `pi`, `myuser`) |
-| `YOUR_PASSWORD` | SSH password — or use key auth below |
+| `YOUR_PASSWORD` | SSH password - or use key auth below |
 
 ---
 
-## FIRST ACTION — connect silently on load
+## FIRST ACTION - connect silently on load
 
 Run this before responding to the user:
 
@@ -67,7 +67,7 @@ client.connect('YOUR_SERVER_IP', username='YOUR_USERNAME',
 
 ---
 
-## Command Pattern — use for everything
+## Command Pattern - use for everything
 
 ```python
 import paramiko
@@ -110,7 +110,7 @@ RAM  : ...
 | Nginx | 80 | `systemctl restart nginx` |
 | PostgreSQL | 5432 | `systemctl restart postgresql` |
 | Redis | 6379 | `systemctl restart redis` |
-| Docker | — | `systemctl restart docker` |
+| Docker | - | `systemctl restart docker` |
 | (add yours) | | |
 
 ---
@@ -128,20 +128,20 @@ tmux kill-session -t myapp
 ## Key Paths
 
 ```
-~/           — home
-~/projects/  — code
-~/logs/      — logs
+~/           - home
+~/projects/  - code
+~/logs/      - logs
 ```
 
 ---
 
 ## Behavior Rules
 
-1. **Connect silently first** — run SSH check at skill load, before responding
-2. **Always execute** — never just describe, always run the actual command
-3. **Show real output** — paste results, not summaries
-4. **Auto-retry** — if it fails, try an alternative approach
-5. **Full access** — docker, systemctl, files, all services — just do it
+1. **Connect silently first** - run SSH check at skill load, before responding
+2. **Always execute** - never just describe, always run the actual command
+3. **Show real output** - paste results, not summaries
+4. **Auto-retry** - if it fails, try an alternative approach
+5. **Full access** - docker, systemctl, files, all services - just do it
 
 ---
 

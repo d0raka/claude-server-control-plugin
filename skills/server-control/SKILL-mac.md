@@ -8,20 +8,20 @@ description: >
   "deploy", "fix it on the server", "edit file on the mac".
 ---
 
-# Server Control — macOS via SSH
+# Server Control - macOS via SSH
 
 > **Other platforms:** See `SKILL.md` for Linux, `SKILL-windows.md` for Windows.
 > To activate this file, rename it to `SKILL.md`.
 
 ---
 
-## ⚙️ SETUP — Fill in your details
+## ⚙️ SETUP - Fill in your details
 
 | Placeholder | Replace with |
 |------------|--------------|
 | `YOUR_MAC_IP` | Tailscale IP recommended (e.g. `100.64.0.5`) |
 | `YOUR_USERNAME` | macOS username (e.g. `john`, `admin`) |
-| `YOUR_PASSWORD` | SSH password — or use key auth below |
+| `YOUR_PASSWORD` | SSH password - or use key auth below |
 
 **Enable SSH on your Mac first:**
 Go to System Settings → General → Sharing → Enable "Remote Login"
@@ -29,7 +29,7 @@ Or via terminal: `sudo systemsetup -setremotelogin on`
 
 ---
 
-## FIRST ACTION — connect silently on load
+## FIRST ACTION - connect silently on load
 
 Run this before responding to the user:
 
@@ -71,7 +71,7 @@ client.connect('YOUR_MAC_IP', username='YOUR_USERNAME',
 
 ---
 
-## Command Pattern — use for everything
+## Command Pattern - use for everything
 
 ```python
 import paramiko
@@ -107,7 +107,7 @@ RAM  : ...
 
 ## My Services
 
-> Edit this table — macOS uses `launchctl` / `brew services`
+> Edit this table - macOS uses `launchctl` / `brew services`
 
 | Service | How to manage |
 |---------|--------------|
@@ -123,25 +123,25 @@ RAM  : ...
 ## Key Paths
 
 ```
-~/                  — home (/Users/YOUR_USERNAME)
-~/Documents/        — documents
-~/Developer/        — code (convention)
-/Applications/      — installed apps
-/usr/local/         — Homebrew (Intel)
-/opt/homebrew/      — Homebrew (Apple Silicon)
-/Library/Logs/      — system logs
-~/Library/Logs/     — user logs
+~/                  - home (/Users/YOUR_USERNAME)
+~/Documents/        - documents
+~/Developer/        - code (convention)
+/Applications/      - installed apps
+/usr/local/         - Homebrew (Intel)
+/opt/homebrew/      - Homebrew (Apple Silicon)
+/Library/Logs/      - system logs
+~/Library/Logs/     - user logs
 ```
 
 ---
 
 ## Behavior Rules
 
-1. **Connect silently first** — run SSH check at skill load, before responding
-2. **Always execute** — never just describe, always run the actual command
-3. **Show real output** — paste results, not summaries
-4. **Auto-retry** — if it fails, try an alternative approach
-5. **macOS-aware** — prefer `brew`, `launchctl`, `open`, `osascript` over Linux equivalents
+1. **Connect silently first** - run SSH check at skill load, before responding
+2. **Always execute** - never just describe, always run the actual command
+3. **Show real output** - paste results, not summaries
+4. **Auto-retry** - if it fails, try an alternative approach
+5. **macOS-aware** - prefer `brew`, `launchctl`, `open`, `osascript` over Linux equivalents
 
 ---
 
