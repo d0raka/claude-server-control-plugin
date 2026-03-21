@@ -1,16 +1,18 @@
 #!/bin/bash
 # Claude Server Control Plugin - Installer
-# Run this on your computer (the one with Claude Cowork)
-# Usage: curl -fsSL https://raw.githubusercontent.com/d0raka/claude-server-control-plugin/main/install.sh | bash
+# Usage: bash <(curl -fsSL https://raw.githubusercontent.com/d0raka/claude-server-control-plugin/main/install.sh)
 
 set -e
 
 REPO_URL="https://github.com/d0raka/claude-server-control-plugin"
 INSTALL_DIR="$HOME/claude-server-control-plugin"
 
+# Always read from terminal even when piped
+exec < /dev/tty
+
 echo ""
 echo "╔═══════════════════════════════════════════════╗"
-echo "║   Claude Server Control Plugin - Installer   ║"
+echo "║  Claude Server Control Plugin - Installer    ║"
 echo "╚═══════════════════════════════════════════════╝"
 echo ""
 
@@ -22,14 +24,14 @@ if ! command -v git &> /dev/null; then
     elif command -v brew &> /dev/null; then
         brew install git
     else
-        echo "Error: please install git manually and re-run this script."
+        echo "Error: please install git manually and re-run."
         exit 1
     fi
 fi
 
-# Clone the repo
-if [ -d "$INSTALL_DIR" ]; then
-    echo "Found existing install at $INSTALL_DIR - updating..."
+# Clone or update
+if [ -d "$INSTALL_DIR/.git" ]; then
+    echo "Updating existing install..."
     git -C "$INSTALL_DIR" pull -q
 else
     echo "Downloading plugin..."
@@ -45,74 +47,77 @@ echo ""
 read -p "Enter 1, 2 or 3: " PLATFORM
 
 case $PLATFORM in
-    1)
-        SKILL_SRC="SKILL.md"
-        PLATFORM_NAME="Linux"
-        ;;
-    2)
-        SKILL_SRC="SKILL-mac.md"
-        PLATFORM_NAME="macOS"
-        ;;
-    3)
-        SKILL_SRC="SKILL-windows.md"
-        PLATFORM_NAME="Windows"
-        ;;
-    *)
-        echo "Invalid choice. Defaulting to Linux."
-        SKILL_SRC="SKILL.md"
-        PLATFORM_NAME="Linux"
-        ;;
+    2) SKILL_SRC="SKILL-mac.md";     PLATFORM_NAME="macOS"   ;;
+    3) SKILL_SRC="SKILL-windows.md"; PLATFORM_NAME="Windows" ;;
+    *) SKILL_SRC="SKILL.md";         PLATFORM_NAME="Linux"   ;;
 esac
 
 SKILLS_DIR="$INSTALL_DIR/skills/server-control"
 
 echo ""
 echo "Enter your $PLATFORM_NAME machine details:"
-echo "(These will be saved into the plugin - keep this folder private)"
 echo ""
-read -p "  IP address (e.g. 100.64.0.5):  " SERVER_IP
-read -p "  SSH username (e.g. ubuntu):     " SSH_USER
-read -s -p "  SSH password:                   " SSH_PASS
+read -p "  IP address (e.g. 100.64.0.5): " SERVER_IP
+read -p "  SSH username (e.g. ubuntu):    " SSH_USER
+read -s -p "  SSH password:                  " SSH_PASS
 echo ""
+
+# Escape special characters for sed (handles /, &, \, newlines)
+escape_sed() {
+    printf '%s' "$1" | sed 's/[\/&]/\\&/g'
+}
+
+SERVER_IP_ESC=$(escape_sed "$SERVER_IP")
+SSH_USER_ESC=$(escape_sed "$SSH_USER")
+SSH_PASS_ESC=$(escape_sed "$SSH_PASS")
 
 # Activate the right SKILL file
 if [ "$SKILL_SRC" != "SKILL.md" ]; then
-    # Back up current SKILL.md if it exists and isn't already a backup
     if [ -f "$SKILLS_DIR/SKILL.md" ]; then
-        CURRENT_PLATFORM=$(head -5 "$SKILLS_DIR/SKILL.md" | grep -i "Linux\|macOS\|Windows" | head -1 | awk '{print $NF}' || echo "linux")
-        mv "$SKILLS_DIR/SKILL.md" "$SKILLS_DIR/SKILL-backup.md" 2>/dev/null || true
+        mv "$SKILLS_DIR/SKILL.md" "$SKILLS_DIR/SKILL-linux.md" 2>/dev/null || true
     fi
     cp "$SKILLS_DIR/$SKILL_SRC" "$SKILLS_DIR/SKILL.md"
 fi
 
-# Fill in the credentials using sed
-sed -i.bak \
-    -e "s|YOUR_SERVER_IP|$SERVER_IP|g" \
-    -e "s|YOUR_MAC_IP|$SERVER_IP|g" \
-    -e "s|YOUR_WINDOWS_IP|$SERVER_IP|g" \
-    -e "s|YOUR_USERNAME|$SSH_USER|g" \
-    -e "s|YOUR_PASSWORD|$SSH_PASS|g" \
-    "$SKILLS_DIR/SKILL.md"
-
-rm -f "$SKILLS_DIR/SKILL.md.bak"
+# Fill in credentials
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS sed needs empty string for in-place edit
+    sed -i '' \
+        -e "s/YOUR_SERVER_IP/$SERVER_IP_ESC/g" \
+        -e "s/YOUR_MAC_IP/$SERVER_IP_ESC/g" \
+        -e "s/YOUR_WINDOWS_IP/$SERVER_IP_ESC/g" \
+        -e "s/YOUR_USERNAME/$SSH_USER_ESC/g" \
+        -e "s/YOUR_PASSWORD/$SSH_PASS_ESC/g" \
+        "$SKILLS_DIR/SKILL.md"
+else
+    sed -i \
+        -e "s/YOUR_SERVER_IP/$SERVER_IP_ESC/g" \
+        -e "s/YOUR_MAC_IP/$SERVER_IP_ESC/g" \
+        -e "s/YOUR_WINDOWS_IP/$SERVER_IP_ESC/g" \
+        -e "s/YOUR_USERNAME/$SSH_USER_ESC/g" \
+        -e "s/YOUR_PASSWORD/$SSH_PASS_ESC/g" \
+        "$SKILLS_DIR/SKILL.md"
+fi
 
 echo ""
 echo "╔═══════════════════════════════════════════════╗"
-echo "║   Done! One step left:                       ║"
+echo "║  Done! One step left:                        ║"
 echo "╠═══════════════════════════════════════════════╣"
 echo "║                                               ║"
-echo "║   Open Claude Cowork and:                    ║"
-echo "║   Settings -> Plugins -> Load local plugin   ║"
+echo "║  Open Claude Cowork and go to:               ║"
+echo "║  Settings -> Plugins -> Load local plugin    ║"
 echo "║                                               ║"
-printf "║   Select this folder:                        ║\n"
-echo "║   $INSTALL_DIR"
+echo "║  Select this folder:                         ║"
+printf "║  %-46s║\n" "$INSTALL_DIR"
 echo "║                                               ║"
-echo "║   Then start a new chat - Claude will         ║"
-echo "║   connect to your $PLATFORM_NAME machine automatically. ║"
-echo "║                                               ║"
+echo "║  Start a new chat - Claude will connect       ║"
+echo "║  to your $PLATFORM_NAME machine automatically.       ║"
 echo "╚═══════════════════════════════════════════════╝"
 echo ""
-echo "Tip: To open the folder now, run:"
-echo "  open $INSTALL_DIR"    # macOS
-echo "  xdg-open $INSTALL_DIR" # Linux
-echo ""
+
+# Open the folder
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    open "$INSTALL_DIR"
+elif command -v xdg-open &> /dev/null; then
+    xdg-open "$INSTALL_DIR" 2>/dev/null &
+fi

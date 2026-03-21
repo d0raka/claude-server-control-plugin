@@ -12,7 +12,7 @@ Run commands, manage services, deploy code, monitor health, edit files - all thr
 
 **Linux or macOS:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/d0raka/claude-server-control-plugin/main/install.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/d0raka/claude-server-control-plugin/main/install.sh)
 ```
 
 **Windows** (PowerShell):
