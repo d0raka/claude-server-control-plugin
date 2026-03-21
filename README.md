@@ -4,8 +4,6 @@ Control any computer remotely from Claude - **Linux, macOS, or Windows** - using
 
 Run commands, manage services, deploy code, monitor health, edit files - all through Claude, without touching a terminal yourself.
 
-Built with SSH via `paramiko`.
-
 ---
 
 ## Install in 2 steps
