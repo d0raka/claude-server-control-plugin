@@ -6,9 +6,7 @@ Run commands, manage services, deploy code, monitor health, edit files - all thr
 
 ---
 
-## Install in 2 steps
-
-### Step 1 - Run the installer on your computer (where Claude is)
+## Install - one command
 
 **Linux or macOS:**
 ```bash
@@ -20,14 +18,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/d0raka/claude-server-control
 irm https://raw.githubusercontent.com/d0raka/claude-server-control-plugin/main/install.ps1 | iex
 ```
 
-The installer asks which platform you want to control (Linux / Mac / Windows), then asks for the IP, username, and password. It fills everything in automatically.
+The installer asks which platform you want to control (Linux / Mac / Windows), your machine's IP, username, and password - then registers the plugin in Claude Cowork automatically.
 
-### Step 2 - Load the plugin in Claude Cowork
-
-1. Open Claude Cowork
-2. Go to **Settings -> Plugins -> Load local plugin**
-3. Select the `claude-server-control-plugin` folder (saved to your home directory)
-4. Start a new chat - Claude connects to your machine automatically
+Just restart Claude Cowork, start a new chat, and Claude connects to your machine.
 
 That's it.
 
