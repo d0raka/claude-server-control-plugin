@@ -80,27 +80,40 @@ Write-Host "Registering plugin in Claude Cowork..." -ForegroundColor Yellow
 
 $Registered = $false
 
-$ClaudeSessions = "$env:APPDATA\Claude\local-agent-mode-sessions"
+Write-Host "Registering plugin in Claude Cowork..." -ForegroundColor Yellow
 
-if (Test-Path $ClaudeSessions) {
-    # Find the most recently modified installed_plugins.json
-    $PluginsJson = Get-ChildItem $ClaudeSessions -Recurse -Filter "installed_plugins.json" -ErrorAction SilentlyContinue `
-        | Sort-Object LastWriteTime -Descending `
-        | Select-Object -First 1
+try {
+    # Search all possible Claude data directories
+    $SearchRoots = @(
+        "$env:APPDATA\Claude\local-agent-mode-sessions",
+        "$env:LOCALAPPDATA\Claude\local-agent-mode-sessions",
+        "$env:USERPROFILE\AppData\Roaming\Claude\local-agent-mode-sessions"
+    )
+
+    $PluginsJson = $null
+    foreach ($Root in $SearchRoots) {
+        if (Test-Path $Root) {
+            $PluginsJson = Get-ChildItem $Root -Recurse -Filter "installed_plugins.json" -ErrorAction SilentlyContinue `
+                | Sort-Object LastWriteTime -Descending `
+                | Select-Object -First 1
+            if ($PluginsJson) { break }
+        }
+    }
 
     if ($PluginsJson) {
-        $MarketplaceDir = Join-Path (Split-Path $PluginsJson.FullName) "marketplaces\local-desktop-app-uploads"
+        $SessionDir     = Split-Path $PluginsJson.FullName
+        $MarketplaceDir = Join-Path $SessionDir "marketplaces\local-desktop-app-uploads"
         $PluginDest     = Join-Path $MarketplaceDir $PluginName
 
-        # Copy plugin to Claude's marketplace folder
-        if (-not (Test-Path $MarketplaceDir)) { New-Item -ItemType Directory -Path $MarketplaceDir -Force | Out-Null }
+        # Copy plugin files into Claude's marketplace folder
+        New-Item -ItemType Directory -Path $MarketplaceDir -Force | Out-Null
         if (Test-Path $PluginDest) { Remove-Item $PluginDest -Recurse -Force }
-        Copy-Item $InstallDir $PluginDest -Recurse
+        Copy-Item $InstallDir $PluginDest -Recurse -Force
 
         # Update installed_plugins.json
-        $Now = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-        $JsonData = Get-Content $PluginsJson.FullName -Raw | ConvertFrom-Json
-
+        $Now       = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+        $JsonRaw   = Get-Content $PluginsJson.FullName -Raw -Encoding UTF8
+        $JsonData  = $JsonRaw | ConvertFrom-Json
         $PluginKey = "${PluginName}@local-desktop-app-uploads"
 
         $NewEntry = [PSCustomObject]@{
@@ -111,17 +124,21 @@ if (Test-Path $ClaudeSessions) {
             lastUpdated = $Now
         }
 
-        if (-not $JsonData.plugins) {
+        if (-not ($JsonData.PSObject.Properties.Name -contains 'plugins')) {
             $JsonData | Add-Member -MemberType NoteProperty -Name "plugins" -Value ([PSCustomObject]@{})
         }
-
         $JsonData.plugins | Add-Member -MemberType NoteProperty -Name $PluginKey -Value @($NewEntry) -Force
 
-        $JsonData | ConvertTo-Json -Depth 10 | Set-Content $PluginsJson.FullName -Encoding UTF8
+        $JsonData | ConvertTo-Json -Depth 10 | Set-Content $PluginsJson.FullName -Encoding UTF8 -Force
 
         $Registered = $true
-        Write-Host "  Plugin registered successfully." -ForegroundColor Green
+        Write-Host "  Registered at: $($PluginsJson.FullName)" -ForegroundColor DarkGray
+    } else {
+        Write-Host "  Claude Cowork session not found - will show manual instructions." -ForegroundColor DarkGray
     }
+} catch {
+    Write-Host "  Auto-register failed: $_" -ForegroundColor DarkGray
+    Write-Host "  Will show manual instructions instead." -ForegroundColor DarkGray
 }
 
 # ── 8. Done ──────────────────────────────────────────────────────────────────
@@ -131,9 +148,9 @@ if ($Registered) {
     Write-Host "║  All done!                                   ║" -ForegroundColor Green
     Write-Host "╠═══════════════════════════════════════════════╣" -ForegroundColor Green
     Write-Host "║                                               ║" -ForegroundColor Green
-    Write-Host "║  The plugin was installed automatically.      ║" -ForegroundColor Green
-    Write-Host "║  Just restart Claude Cowork and start         ║" -ForegroundColor Green
-    Write-Host "║  a new chat - Claude connects automatically.  ║" -ForegroundColor Green
+    Write-Host "║  Plugin installed automatically.              ║" -ForegroundColor Green
+    Write-Host "║  Restart Claude Cowork and start a new chat. ║" -ForegroundColor Green
+    Write-Host "║  Claude will connect to your machine.        ║" -ForegroundColor Green
     Write-Host "║                                               ║" -ForegroundColor Green
     Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Green
 } else {
@@ -144,9 +161,8 @@ if ($Registered) {
     Write-Host "║  Open Claude Cowork:                         ║" -ForegroundColor Yellow
     Write-Host "║  Settings -> Plugins -> Load local plugin    ║" -ForegroundColor Yellow
     Write-Host "║                                               ║" -ForegroundColor Yellow
-    Write-Host "║  Select: $InstallDir" -ForegroundColor Yellow
+    Write-Host "║  Folder: $InstallDir" -ForegroundColor Yellow
     Write-Host "║                                               ║" -ForegroundColor Yellow
     Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Yellow
-    Start-Process explorer.exe $InstallDir
 }
 Write-Host ""
