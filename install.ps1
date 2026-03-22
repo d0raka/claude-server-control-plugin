@@ -11,14 +11,14 @@ Write-Host "║  Claude Server Control Plugin - Installer    ║" -ForegroundCol
 Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
 
-# ── 1. Install git if missing ────────────────────────────────────────────────
+# -- 1. Install git if missing ------------------------------------------------
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     Write-Host "Installing git via winget..."
     winget install --id Git.Git -e --source winget --silent
     $env:PATH += ";C:\Program Files\Git\bin"
 }
 
-# ── 2. Clone or update ───────────────────────────────────────────────────────
+# -- 2. Clone or update -------------------------------------------------------
 if (Test-Path "$InstallDir\.git") {
     Write-Host "Updating existing install..."
     git -C $InstallDir pull -q
@@ -27,7 +27,7 @@ if (Test-Path "$InstallDir\.git") {
     git clone -q $RepoUrl $InstallDir
 }
 
-# ── 3. Choose platform ──────────────────────────────────────────────────────
+# -- 3. Choose platform -------------------------------------------------------
 Write-Host ""
 Write-Host "Which machine do you want to control?" -ForegroundColor Cyan
 Write-Host "  1) Linux (Ubuntu, Debian, Raspberry Pi, etc.)"
@@ -44,7 +44,7 @@ switch ($Platform) {
 
 $SkillsDir = "$InstallDir\skills\server-control"
 
-# ── 4. Get credentials ──────────────────────────────────────────────────────
+# -- 4. Get credentials -------------------------------------------------------
 Write-Host ""
 Write-Host "Enter your $PlatformName machine details:" -ForegroundColor Cyan
 Write-Host ""
@@ -55,16 +55,21 @@ $SshPass = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SshPassSec)
 )
 
-# ── 5. Activate the right SKILL file ────────────────────────────────────────
-$ActiveSkill = "$SkillsDir\SKILL.md"
+# -- 5. Build plugin in a temp folder -----------------------------------------
+$TempPlugin = "$env:TEMP\server-control-plugin-build"
+if (Test-Path $TempPlugin) { Remove-Item $TempPlugin -Recurse -Force }
+Copy-Item $InstallDir $TempPlugin -Recurse -Force
+
+# -- 6. Activate the right SKILL file -----------------------------------------
+$ActiveSkill = "$TempPlugin\skills\server-control\SKILL.md"
 if ($SkillSrc -ne "SKILL.md") {
     if (Test-Path $ActiveSkill) {
-        Rename-Item $ActiveSkill "$SkillsDir\SKILL-linux.md" -Force -ErrorAction SilentlyContinue
+        Rename-Item $ActiveSkill "$TempPlugin\skills\server-control\SKILL-linux.md" -Force -ErrorAction SilentlyContinue
     }
-    Copy-Item "$SkillsDir\$SkillSrc" $ActiveSkill
+    Copy-Item "$TempPlugin\skills\server-control\$SkillSrc" $ActiveSkill
 }
 
-# ── 6. Fill in credentials ──────────────────────────────────────────────────
+# -- 7. Fill in credentials ---------------------------------------------------
 $content = Get-Content $ActiveSkill -Raw
 $content = $content `
     -replace [regex]::Escape("YOUR_SERVER_IP"),  $ServerIP `
@@ -74,95 +79,37 @@ $content = $content `
     -replace [regex]::Escape("YOUR_PASSWORD"),   $SshPass
 Set-Content $ActiveSkill $content -Encoding UTF8
 
-# ── 7. Auto-register in Claude Cowork ───────────────────────────────────────
+# -- 8. Package as .plugin file (zip) -----------------------------------------
 Write-Host ""
-Write-Host "Registering plugin in Claude Cowork..." -ForegroundColor Yellow
+Write-Host "Creating your personalized .plugin file..." -ForegroundColor Yellow
 
-$Registered = $false
+$Desktop    = [Environment]::GetFolderPath("Desktop")
+$PluginFile = "$Desktop\server-control.plugin"
 
-Write-Host "Registering plugin in Claude Cowork..." -ForegroundColor Yellow
+if (Test-Path $PluginFile) { Remove-Item $PluginFile -Force }
 
-try {
-    # Search all possible Claude data directories
-    $SearchRoots = @(
-        "$env:APPDATA\Claude\local-agent-mode-sessions",
-        "$env:LOCALAPPDATA\Claude\local-agent-mode-sessions",
-        "$env:USERPROFILE\AppData\Roaming\Claude\local-agent-mode-sessions"
-    )
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::CreateFromDirectory($TempPlugin, $PluginFile)
 
-    $PluginsJson = $null
-    foreach ($Root in $SearchRoots) {
-        if (Test-Path $Root) {
-            $PluginsJson = Get-ChildItem $Root -Recurse -Filter "installed_plugins.json" -ErrorAction SilentlyContinue `
-                | Sort-Object LastWriteTime -Descending `
-                | Select-Object -First 1
-            if ($PluginsJson) { break }
-        }
-    }
+# Cleanup temp build
+Remove-Item $TempPlugin -Recurse -Force
 
-    if ($PluginsJson) {
-        $SessionDir     = Split-Path $PluginsJson.FullName
-        $MarketplaceDir = Join-Path $SessionDir "marketplaces\local-desktop-app-uploads"
-        $PluginDest     = Join-Path $MarketplaceDir $PluginName
-
-        # Copy plugin files into Claude's marketplace folder
-        New-Item -ItemType Directory -Path $MarketplaceDir -Force | Out-Null
-        if (Test-Path $PluginDest) { Remove-Item $PluginDest -Recurse -Force }
-        Copy-Item $InstallDir $PluginDest -Recurse -Force
-
-        # Update installed_plugins.json
-        $Now       = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-        $JsonRaw   = Get-Content $PluginsJson.FullName -Raw -Encoding UTF8
-        $JsonData  = $JsonRaw | ConvertFrom-Json
-        $PluginKey = "${PluginName}@local-desktop-app-uploads"
-
-        $NewEntry = [PSCustomObject]@{
-            scope       = "user"
-            installPath = $PluginDest
-            version     = "2.0.0"
-            installedAt = $Now
-            lastUpdated = $Now
-        }
-
-        if (-not ($JsonData.PSObject.Properties.Name -contains 'plugins')) {
-            $JsonData | Add-Member -MemberType NoteProperty -Name "plugins" -Value ([PSCustomObject]@{})
-        }
-        $JsonData.plugins | Add-Member -MemberType NoteProperty -Name $PluginKey -Value @($NewEntry) -Force
-
-        $JsonData | ConvertTo-Json -Depth 10 | Set-Content $PluginsJson.FullName -Encoding UTF8 -Force
-
-        $Registered = $true
-        Write-Host "  Registered at: $($PluginsJson.FullName)" -ForegroundColor DarkGray
-    } else {
-        Write-Host "  Claude Cowork session not found - will show manual instructions." -ForegroundColor DarkGray
-    }
-} catch {
-    Write-Host "  Auto-register failed: $_" -ForegroundColor DarkGray
-    Write-Host "  Will show manual instructions instead." -ForegroundColor DarkGray
-}
-
-# ── 8. Done ──────────────────────────────────────────────────────────────────
+# -- 9. Done ------------------------------------------------------------------
 Write-Host ""
-if ($Registered) {
-    Write-Host "╔═══════════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "║  All done!                                   ║" -ForegroundColor Green
-    Write-Host "╠═══════════════════════════════════════════════╣" -ForegroundColor Green
-    Write-Host "║                                               ║" -ForegroundColor Green
-    Write-Host "║  Plugin installed automatically.              ║" -ForegroundColor Green
-    Write-Host "║  Restart Claude Cowork and start a new chat. ║" -ForegroundColor Green
-    Write-Host "║  Claude will connect to your machine.        ║" -ForegroundColor Green
-    Write-Host "║                                               ║" -ForegroundColor Green
-    Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Green
-} else {
-    Write-Host "╔═══════════════════════════════════════════════╗" -ForegroundColor Yellow
-    Write-Host "║  One manual step needed:                     ║" -ForegroundColor Yellow
-    Write-Host "╠═══════════════════════════════════════════════╣" -ForegroundColor Yellow
-    Write-Host "║                                               ║" -ForegroundColor Yellow
-    Write-Host "║  Open Claude Cowork:                         ║" -ForegroundColor Yellow
-    Write-Host "║  Settings -> Plugins -> Load local plugin    ║" -ForegroundColor Yellow
-    Write-Host "║                                               ║" -ForegroundColor Yellow
-    Write-Host "║  Folder: $InstallDir" -ForegroundColor Yellow
-    Write-Host "║                                               ║" -ForegroundColor Yellow
-    Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Yellow
-}
+Write-Host "╔═══════════════════════════════════════════════╗" -ForegroundColor Green
+Write-Host "║  Your plugin is ready!                       ║" -ForegroundColor Green
+Write-Host "╠═══════════════════════════════════════════════╣" -ForegroundColor Green
+Write-Host "║                                               ║" -ForegroundColor Green
+Write-Host "║  File saved to your Desktop:                 ║" -ForegroundColor Green
+Write-Host "║    server-control.plugin                     ║" -ForegroundColor Green
+Write-Host "║                                               ║" -ForegroundColor Green
+Write-Host "║  To activate:                                ║" -ForegroundColor Green
+Write-Host "║  Open Claude Cowork ->                       ║" -ForegroundColor Green
+Write-Host "║  Customize -> Upload plugin                  ║" -ForegroundColor Green
+Write-Host "║  Select: server-control.plugin               ║" -ForegroundColor Green
+Write-Host "║                                               ║" -ForegroundColor Green
+Write-Host "║  Start a new chat and Claude will connect    ║" -ForegroundColor Green
+Write-Host "║  to your $PlatformName machine automatically.         ║" -ForegroundColor Green
+Write-Host "║                                               ║" -ForegroundColor Green
+Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Green
 Write-Host ""
