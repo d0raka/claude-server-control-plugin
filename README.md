@@ -1,8 +1,16 @@
 # Claude Server Control Plugin
 
+[![CI](https://github.com/d0raka/claude-server-control-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/d0raka/claude-server-control-plugin/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Shell](https://img.shields.io/badge/Shell-4EAA25?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
+
 Control any computer remotely from Claude - **Linux, macOS, or Windows** - using natural conversation.
 
 Run commands, manage services, deploy code, monitor health, edit files - all through Claude, without touching a terminal yourself.
+
+## Demo
+
+There is no hosted UI. After the one-command install, restart Claude Cowork and ask it to check CPU, restart a service, or read a log. The example conversations below are the demo.
 
 ---
 
